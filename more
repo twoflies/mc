@@ -1,0 +1,2 @@
+g++ -c -o obj/security/securitycommandinterpreter.o security/securitycommandinterpreter.cc -g -Wall
+Makefile:13: recipe for target 'obj/security/securitycommandinterpreter.o' failed
