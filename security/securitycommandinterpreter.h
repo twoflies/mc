@@ -9,17 +9,20 @@
 #include "../plugincommandinterpreter.h"
 
 class SecurityCommandInterpreter : public PluginCommandInterpreter {
-  typedef int (SecurityCommandInterpreter::*CommandFunction)(const std::string&, const std::vector<std::string> &, CommandOutputWriter*);
-
+  typedef int (SecurityCommandInterpreter::*CommandFunction)(const std::string&, const std::vector<std::string>&);
+  
  public:
-  SecurityCommandInterpreter(Plugin* const plugin);
+  SecurityCommandInterpreter(Plugin* const plugin, OutputWriter* const outputWriter);
   ~SecurityCommandInterpreter();
-  int executeCommand(const std::vector<std::string> &command, CommandOutputWriter *outputWriter);
+  int executeCommand(const std::vector<std::string>& command);
 
  private:
-  int listCommands(CommandOutputWriter *outputWriter);
-  int arm(const std::string &command, const std::vector<std::string> &arguments, CommandOutputWriter *outputWriter);
-  int disarm(const std::string &command, const std::vector<std::string> &arguments, CommandOutputWriter *outputWriter);
+  int listCommands();
+  int discover(const std::string& command, const std::vector<std::string>& arguments);
+  int arm(const std::string& command, const std::vector<std::string>& arguments);
+  int disarm(const std::string& command, const std::vector<std::string>& arguments);
+
+ private:
   std::map<std::string, CommandFunction> commandFunctions_;
 };
 

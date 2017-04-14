@@ -1,31 +1,21 @@
+// Command Interpreter
+
 #ifndef COMMANDINTERPRETER_H_
 #define COMMANDINTERPRETER_H_
-
-// Command Interpreter
 
 #include <string>
 #include <vector>
 
-#ifndef ERR
-#define ERR (-1)
-#endif
-
-#ifndef OK
-#define OK (0)
-#endif
-
-class CommandOutputWriter {
- public:
-  CommandOutputWriter() {};
-  virtual ~CommandOutputWriter() {};
-  virtual void writeLine(const std::string &line) = 0;
-};
+#include "outputwriter.h"
 
 class CommandInterpreter {
  public:
-  CommandInterpreter();
+  CommandInterpreter(OutputWriter* const outputWriter);
   virtual ~CommandInterpreter();
-  virtual int executeCommand(const std::vector<std::string> &command, CommandOutputWriter *outputWriter) = 0;
+  virtual int executeCommand(const std::vector<std::string>& command) = 0;
+
+ protected:
+  OutputWriter* const outputWriter_;
 };
 
 #endif // COMMANDINTERPRETER_H_

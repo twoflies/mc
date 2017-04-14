@@ -4,35 +4,53 @@
 
 #include <panel.h>
 
-#define CITERATOR(T,v,n) for(std::vector<T>::const_iterator (n) = (v).begin(); (n) != (v).end(); ++(n))
+MasterControlConsole::MasterControlConsole(MasterControl* const masterControl) : masterControl_(masterControl) {
+}
 
-#define ITERATOR(T,v,n) for(std::vector<T>::iterator (n) = (v).begin(); (n) != (v).end(); ++(n))
+MasterControlConsole::~MasterControlConsole() {
+}
 
-MasterControlConsole::MasterControlConsole(MasterControl *masterControl) {
-  masterControl_ = masterControl;
-  
+int MasterControlConsole::initialize() {
   initscr();
   //raw();
   cbreak();
   noecho();
   start_color();
 
+  int MID = LINES / 2;
+
   pluginDataChangedEventHandler_ = new EventHandler<MasterControlConsole, void>(this, &MasterControlConsole::pluginDataChanged);
-  const std::vector<Plugin*> *plugins = masterControl->getPlugins();
-  CITERATOR(Plugin*, *plugins, it) {
-    PluginWindow *window = (*it)->createConsoleWindow(LINES / 2, COLS, 0, 0);
-    window->getDataChangedEvent().addHandler(pluginDataChangedEventHandler_);
-    pluginWindows_.push_back(window);
+  
+  const std::vector<Plugin*>& plugins = masterControl_->getPlugins();
+
+  shellWindow_ = new ShellWindow(plugins, LINES - MID, COLS, MID, 0);
+  
+  for (std::vector<Plugin*>::const_iterator it = plugins.begin(); it != plugins.end(); it++) {
+    Plugin* plugin = (*it);
+    PluginWindow* pluginWindow = plugin->createConsoleWindow(MID, COLS, 0, 0);
+    if (pluginWindow == NULL) {
+      return -1;
+    }
+    pluginWindow->getDataChangedEvent()->addHandler(pluginDataChangedEventHandler_);
+    pluginWindows_.push_back(pluginWindow);
+
+    int result = plugin->initialize(shellWindow_);
+    if (result != 0) {
+      return -1;
+    }
   }
   
-  int y = LINES / 2;
-  shellWindow_ = new ShellWindow(plugins, LINES - y, COLS, y, 0);
+  return 0;
 }
 
-MasterControlConsole::~MasterControlConsole() {
-  ITERATOR(PluginWindow*, pluginWindows_, it) {
-    PluginWindow *window = *it;
-    Plugin *plugin = window->getPlugin();
+int MasterControlConsole::destroy() {
+  for (std::vector<PluginWindow*>::iterator it = pluginWindows_.begin(); it != pluginWindows_.end(); it++) {
+    PluginWindow* window = *it;
+    Plugin* const plugin = window->getPlugin();
+    int result = plugin->destroy();
+    if (result != 0) {
+      return -1;
+    }
     plugin->destroyConsoleWindow(window);
   }
   pluginWindows_.clear();
@@ -40,6 +58,8 @@ MasterControlConsole::~MasterControlConsole() {
   delete shellWindow_;
   
   endwin();
+
+  return 0;
 }
 
 int MasterControlConsole::mainLoop() {
@@ -51,9 +71,8 @@ int MasterControlConsole::mainLoop() {
 }
 
 int MasterControlConsole::refreshPluginWindows() {
-  ITERATOR(PluginWindow*, pluginWindows_, it) {
-    PluginWindow *window = *it;
-    window->draw();
+  for (std::vector<PluginWindow*>::iterator it = pluginWindows_.begin(); it != pluginWindows_.end(); it++) {
+    (*it)->draw();
   }
 
   update_panels();

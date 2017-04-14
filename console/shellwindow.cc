@@ -8,8 +8,7 @@
 
 #define MAX_BUFFER_COUNT 50
 
-ShellWindow::ShellWindow(const std::vector<Plugin*> *plugins, int height, int width, int y, int x) : Window(height, width, y, x) {
-  plugins_ = plugins;
+ShellWindow::ShellWindow(const std::vector<Plugin*>& plugins, int height, int width, int y, int x) : Window(height, width, y, x), plugins_(plugins) {
   executing_ = false;
 }
 
@@ -17,14 +16,14 @@ ShellWindow::~ShellWindow() {
 }
 
 int ShellWindow::mainLoop() {
-  WINDOW *win = getWin();
+  WINDOW* win = getWin();
   if (win == NULL) {
-    return ERR;
+    return -1;
   }
 
   int height, width;
   if (getmaxyx(win, height, width) == ERR) {
-    return ERR;
+    return -1;
   }
   width++;  // -Wall
   
@@ -33,7 +32,7 @@ int ShellWindow::mainLoop() {
     int c = wgetch(win);
     switch (c) {
     case 10:
-      executeCommand(quit);
+      executeCommand(&quit);
       break;
     default:
       commandBuffer_.push_back(c);
@@ -44,18 +43,18 @@ int ShellWindow::mainLoop() {
     doupdate();
   }
 
-  return OK;
+  return 0;
 }
 
 int ShellWindow::drawContent() {  
-  WINDOW *win = getWin();
+  WINDOW* win = getWin();
   if (win == NULL) {
-    return ERR;
+    return -1;
   }
 
   int height, width;
   if (getmaxyx(win, height, width) == ERR) {
-    return ERR;
+    return -1;
   }
   width++;  // -Wall
 
@@ -78,12 +77,12 @@ int ShellWindow::drawContent() {
 
   update_panels();
 
-  return OK;
+  return 0;
 }
 
-PluginCommandInterpreter *ShellWindow::getPluginCommandInterpreter(std::string const &prefix) const {
-  for (std::vector<Plugin*>::const_iterator it = plugins_->begin(); it != plugins_->end(); ++it) {
-    Plugin *plugin = (*it);
+PluginCommandInterpreter* const ShellWindow::getPluginCommandInterpreter(const std::string& prefix) {
+  for (std::vector<Plugin*>::const_iterator it = plugins_.begin(); it != plugins_.end(); ++it) {
+    Plugin* plugin = (*it);
     if (prefix.compare(plugin->getPrefix()) == 0) {
       return plugin->getCommandInterpreter();
     }
@@ -91,7 +90,7 @@ PluginCommandInterpreter *ShellWindow::getPluginCommandInterpreter(std::string c
   return NULL;
 }
 
-int ShellWindow::executeCommand(bool& quit) {
+int ShellWindow::executeCommand(bool* quit) {
   executing_ = true;
 
   std::string command = commandBuffer_;
@@ -104,16 +103,16 @@ int ShellWindow::executeCommand(bool& quit) {
 
   std::vector<std::string> components = split(command, ' ');
   if (components.size() < 1) {
-    return ERR;
+    return -1;
   }
 
-  PluginCommandInterpreter *pluginCommandInterpreter = getPluginCommandInterpreter(components[0]);
+  PluginCommandInterpreter* const pluginCommandInterpreter = getPluginCommandInterpreter(components[0]);
   if (pluginCommandInterpreter != NULL) {
     std::vector<std::string> pluginCommand;
     if (components.size() > 1) {
       pluginCommand.insert(pluginCommand.begin(), components.begin() + 1, components.end());
     }
-    pluginCommandInterpreter->executeCommand(pluginCommand, this);
+    pluginCommandInterpreter->executeCommand(pluginCommand);
   }
   else if (!executeShellCommand(components, quit)) {
     outputBuffer_.push_back("Unknown command: " + components[0]);
@@ -123,25 +122,25 @@ int ShellWindow::executeCommand(bool& quit) {
 
   drawContent();
 
-  return OK;
+  return 0;
 }
 
-bool ShellWindow::executeShellCommand(const std::vector<std::string> &command, bool &quit) {
+bool ShellWindow::executeShellCommand(const std::vector<std::string>& command, bool* quit) {
   if (command[0].compare("quit") == 0) {
-    quit = true;
+    *quit = true;
     return true;
   }
 
   return false;
 }
 
-void ShellWindow::writeLine(const std::string &line) {
+void ShellWindow::writeLine(const std::string& line) {
   outputBuffer_.push_back(line);
   drawContent();
   doupdate();
 }
 
-int ShellWindow::drawCommandLine(WINDOW *win, int y) {
+int ShellWindow::drawCommandLine(WINDOW* win, int y) {
   int x = 0;
   mvwprintw(win, y, x, ">");
   ++x;

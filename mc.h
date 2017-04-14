@@ -10,8 +10,10 @@
 class MasterControl {
  public:
   MasterControl();
-  int getPluginCount();
-  const std::vector<Plugin*> *getPlugins();
+  ~MasterControl();
+  int initialize();
+  int destroy();
+  const std::vector<Plugin*>& getPlugins();
 
  private:
   std::vector<Plugin*> plugins_;

@@ -7,6 +7,6 @@
 #include <string>
 #include <sstream>
 
-std::vector<std::string> split(const std::string& value, char delim);
+std::vector<std::string> split(std::string value, char delim);
 
 #endif // UTIL_H_

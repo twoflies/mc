@@ -11,12 +11,12 @@
 
 class PluginCommandInterpreter : public CommandInterpreter {
  public:
-  PluginCommandInterpreter(Plugin *plugin);
+  PluginCommandInterpreter(Plugin* const plugin, OutputWriter* const outputWriter);
   virtual ~PluginCommandInterpreter();
-  Plugin *getPlugin();
+  Plugin* const getPlugin();
 
  private:
-  Plugin *plugin_;
+  Plugin* const plugin_;
 };
 
 #endif // PLUGINCOMMANDINTERPRETER_H_
