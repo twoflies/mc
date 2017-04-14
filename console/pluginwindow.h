@@ -11,16 +11,16 @@
 
 class PluginWindow : public Window {
  public:
-  PluginWindow(Plugin *plugin, int height, int width, int y, int x);
+  PluginWindow(Plugin* const plugin, int height, int width, int y, int x);
   int draw();
-  Plugin *getPlugin();
-  Event<void> &getDataChangedEvent();
+  Plugin* const getPlugin();
+  Event<void>* const getDataChangedEvent();
 
  protected:
   void fireDataChangedEvent();
 
  private:
-  Plugin* plugin_;
+  Plugin* const plugin_;
   Event<void> dataChangedEvent_;
 };
 

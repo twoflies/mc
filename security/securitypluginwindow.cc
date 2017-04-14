@@ -2,12 +2,14 @@
 
 #include "securitypluginwindow.h"
 
-SecurityPluginWindow::SecurityPluginWindow(Plugin *plugin, int height, int width, int y, int x) : PluginWindow(plugin, height, width, y, x) {
+#include <sstream>
+
+SecurityPluginWindow::SecurityPluginWindow(Plugin* plugin, int height, int width, int y, int x) : PluginWindow(plugin, height, width, y, x) {
   securityPlugin_ = dynamic_cast<SecurityPlugin*>(plugin);
 
   securityStatusChangedHandler_ = new EventHandler<SecurityPluginWindow, SecurityStatus>(this, &SecurityPluginWindow::securityStatusChanged);
   
-  securityPlugin_->getStatusChangedEvent().addHandler(securityStatusChangedHandler_);
+  securityPlugin_->getStatusChangedEvent()->addHandler(securityStatusChangedHandler_);
   
   infoColor_ = ConsoleColors::registerColorPair(COLOR_GREEN, COLOR_BLACK);
   warningColor_ = ConsoleColors::registerColorPair(COLOR_RED, COLOR_WHITE);
@@ -15,13 +17,13 @@ SecurityPluginWindow::SecurityPluginWindow(Plugin *plugin, int height, int width
 }
 
 SecurityPluginWindow::~SecurityPluginWindow() {
-  securityPlugin_->getStatusChangedEvent().removeHandler(securityStatusChangedHandler_);
+  securityPlugin_->getStatusChangedEvent()->removeHandler(securityStatusChangedHandler_);
 
   delete securityStatusChangedHandler_;
 }
 
 int SecurityPluginWindow::drawContent() { 
-  WINDOW *win = getWin();
+  WINDOW* win = getWin();
   if (win == NULL) {
     return ERR;
   }
@@ -49,22 +51,24 @@ int SecurityPluginWindow::drawContent() {
   ++y;
   x = 2;
 
-  std::vector<SensorNode*> sensorNodes = securityPlugin_->getSensorNodes();
-  for(std::vector<SensorNode*>::iterator it = sensorNodes.begin(); it != sensorNodes.end(); ++it) {
-    SensorNode *node = (*it);
+  const std::vector<Node*>& nodes = securityPlugin_->getNodes();
+  for(std::vector<Node*>::const_iterator it = nodes.begin(); it != nodes.end(); ++it) {
+    Node* node = (*it);
 
-    std::ostringstream s;
-    s << translate("Sensor ") << std::hex << std::showbase << node->getAddress() << std::dec << " (" << node->getLabel() <<"): ";
-    statusString = s.str();
-    mvwprintw(win, y, x, statusString.c_str());
-    x += std::max(statusString.length(), 25ul);
-    
-    statusString = getString((*it)->getState());
-    attributes = getAttributes((*it)->getState());
+    mvwprintw(win, y, x, node->module->identifier.c_str());
+    x += std::max(node->module->identifier.length(), 25ul);
+
+    statusString = getString(node->status);
+    attributes = getAttributes(node->status);
     wattron(win, attributes);
     mvwprintw(win, y, x, translate(statusString).c_str());
     wattroff(win, attributes);
     wclrtoeol(win);
+    x+= statusString.length();
+
+    std::ostringstream stream;
+    stream << " (" << (node->voltage / 1000.0) << "V)";
+    mvwprintw(win, y, x, stream.str().c_str());
     ++y;
     x = 2;
 
@@ -104,22 +108,22 @@ int SecurityPluginWindow::getAttributes(SecurityStatus status) {
   }
 }
 
-std::string SecurityPluginWindow::getString(SensorState state) {
-  switch (state) {
-  case SENSOR_STATE_OK:
+std::string SecurityPluginWindow::getString(NodeStatus status) {
+  switch (status) {
+  case NODE_STATUS_OK:
     return translate("OK");
-  case SENSOR_STATE_FAULTED:
+  case NODE_STATUS_FAULTED:
     return translate("Faulted");
   default:
     return translate("Unknown");
   }
 }
 
-int SecurityPluginWindow::getAttributes(SensorState state) {
-  switch (state) {
-  case SENSOR_STATE_OK:
+int SecurityPluginWindow::getAttributes(NodeStatus status) {
+  switch (status) {
+  case NODE_STATUS_OK:
     return getInfoAttributes();
-  case SENSOR_STATE_FAULTED:
+  case NODE_STATUS_FAULTED:
     return getErrorAttributes();
   default:
     return 0;

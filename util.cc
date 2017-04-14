@@ -2,7 +2,7 @@
 
 #include "util.h"
 
-std::vector<std::string> split(const std::string& value, char delim) {
+std::vector<std::string> split(std::string value, char delim) {
   std::vector<std::string> components;
 
   std::stringstream stream;

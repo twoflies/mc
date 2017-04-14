@@ -11,17 +11,21 @@
 
 class MasterControlConsole {
  public:
-  MasterControlConsole(MasterControl *masterControl);
+  MasterControlConsole(MasterControl* const masterControl);
   ~MasterControlConsole();
+  int initialize();
+  int destroy();
   int mainLoop();
 
  private:
   int refreshPluginWindows();
   void pluginDataChanged(const void*);
-  MasterControl *masterControl_;
+
+ private:
+  MasterControl* const masterControl_;
+  EventHandler<MasterControlConsole, void>* pluginDataChangedEventHandler_;
+  ShellWindow* shellWindow_;
   std::vector<PluginWindow*> pluginWindows_;
-  ShellWindow *shellWindow_;
-  EventHandler<MasterControlConsole,void> *pluginDataChangedEventHandler_;
 };
 
 class ConsoleColors {

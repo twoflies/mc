@@ -2,7 +2,7 @@
 
 #include "commandinterpreter.h"
 
-CommandInterpreter::CommandInterpreter() {
+CommandInterpreter::CommandInterpreter(OutputWriter* const outputWriter) : outputWriter_(outputWriter) {
 }
 
 CommandInterpreter::~CommandInterpreter() {
