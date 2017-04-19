@@ -5,7 +5,7 @@ ODIR=obj
 
 LIBS=-lncurses -lpanel -lxbmanager -lxbserial
 
-_OBJ = locale.o util.o event.o outputwriter.o commandinterpreter.o plugin.o plugincommandinterpreter.o security/securitypluginwindow.o security/securitycommandinterpreter.o security/securityplugin.o mc.o console/window.o console/pluginwindow.o console/shellwindow.o console/mcconsole.o main.o
+_OBJ = locale.o util.o logger.o event.o outputwriter.o commandinterpreter.o plugin.o plugincommandinterpreter.o security/securitypluginwindow.o security/securitycommandinterpreter.o security/securityplugin.o mc.o console/window.o console/pluginwindow.o console/shellwindow.o console/mcconsole.o main.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
