@@ -9,6 +9,7 @@
 #include "../plugin.h"
 #include "../event.h"
 #include "../outputwriter.h"
+#include "../logger.h"
 #include "xbmanager/manager.h"
 #include "xbserial/iosample.h"
 #include "securitycommandinterpreter.h"
@@ -62,6 +63,7 @@ class SecurityPlugin : public Plugin, public XB::IOSampleFrameSubscriber {
   int destroyNodes();
   
  private:
+  Logger logger_;
   XB::Manager manager_;
   SecurityCommandInterpreter* commandInterpreter_;
   SecurityStatus status_;

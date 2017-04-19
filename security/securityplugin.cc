@@ -22,6 +22,10 @@ int SecurityPlugin::initialize(OutputWriter* outputWriter) {
 
   commandInterpreter_ = new SecurityCommandInterpreter(this, outputWriter);
 
+  logger_.open("mc.log");
+  logger_.logInfo("============");
+  logger_.logInfo("System start.");
+
   result = manager_.initialize();
   if (result != 0) {
     return result;
@@ -33,7 +37,20 @@ int SecurityPlugin::initialize(OutputWriter* outputWriter) {
 int SecurityPlugin::destroy() {
   delete commandInterpreter_;
     
-  return destroyNodes();
+  int result = destroyNodes();
+  if (result != 0) {
+    return result;
+  }
+
+  /*result = manager_.destroy();
+  if (result != 0) {
+    return result;
+    }*/
+
+  logger_.logInfo("System stop.");
+  logger_.close();
+
+  return 0;
 }
 
 std::string SecurityPlugin::getPrefix() {
@@ -90,7 +107,15 @@ int SecurityPlugin::discover() {
       result = manager_.configureModule(module, configuration);
       if (result != 0) {
 	outputWriter_->writeLine("Failed to configure node: %d.", result);
+	logger_.logError("Failed to configure node: %d.", result);
       }
+      else {
+	outputWriter_->writeLine("Configured new node '%s'.", module->identifier.c_str());
+	logger_.logInfo("Configured new node '%s'.", module->identifier.c_str());
+      }
+    }
+    else {
+      logger_.logInfo("Discovered existing node '%s'.", module->identifier.c_str());
     }
 
     Node* node = new Node();
@@ -112,6 +137,9 @@ int SecurityPlugin::arm(const std::string& passcode) {
   }
   
   setStatus(SECURITY_STATUS_ARMED);
+
+  logger_.logInfo("System armed.");
+  
   return 0;
 }
 
@@ -121,6 +149,9 @@ int SecurityPlugin::disarm(const std::string& passcode) {
   }
 
   setStatus(SECURITY_STATUS_DISARMED);
+
+  logger_.logInfo("System disarmed.");
+  
   return 0;
 }
 
@@ -134,7 +165,7 @@ void SecurityPlugin::received(const XB::IOSampleFrame* frame) {
     handleIOSample((*it).second, frame);
   }
   else {
-    outputWriter_->writeLine("Received IO sample for unknown node: %02X-%02x", frame->getAddress16().a, frame->getAddress16().b);
+    logger_.logWarn("Received IO sample for unknown node: %02X-%02X", frame->getAddress16().a, frame->getAddress16().b);
   }
 }
 
@@ -142,9 +173,20 @@ int SecurityPlugin::handleIOSample(Node* node, const XB::IOSampleFrame* frame) {
   SecurityStatus status = status_;
   
   if ((node->status != NODE_STATUS_FAULTED) || (status == SECURITY_STATUS_DISARMED)) {
-    node->status = frame->isDigitalPinSet(SENSOR_PIN) ? NODE_STATUS_FAULTED : NODE_STATUS_OK;
-    if ((node->status == NODE_STATUS_FAULTED) && (status == SECURITY_STATUS_ARMED)) {
-      status = SECURITY_STATUS_FAULTED;
+    if (frame->isDigitalPinSet(SENSOR_PIN)) {
+      node->status = NODE_STATUS_FAULTED;
+      logger_.logInfo("Node '%s' Faulted.", node->module->identifier.c_str());
+      if (status == SECURITY_STATUS_ARMED) {
+	status = SECURITY_STATUS_FAULTED;
+	logger_.logInfo("System Faulted.");
+      }
+    }
+    else {
+      bool log = (node->status != NODE_STATUS_OK);
+      node->status = NODE_STATUS_OK;
+      if (log) {
+	logger_.logInfo("Node '%s' OK.", node->module->identifier.c_str());
+      }
     }
   }
   node->voltage = frame->getVoltage();
