@@ -9,6 +9,8 @@ SecurityCommandInterpreter::SecurityCommandInterpreter(Plugin* const plugin, Out
   commandFunctions_["discover"] = &SecurityCommandInterpreter::discover;
   commandFunctions_["arm"] = &SecurityCommandInterpreter::arm;
   commandFunctions_["disarm"] = &SecurityCommandInterpreter::disarm;
+  commandFunctions_["passcode"] = &SecurityCommandInterpreter::passcode;
+  commandFunctions_["name"] = &SecurityCommandInterpreter::name;
 }
 
 SecurityCommandInterpreter::~SecurityCommandInterpreter() {
@@ -93,4 +95,35 @@ int SecurityCommandInterpreter::disarm(const std::string& command, const std::ve
   }
 }
 
+int SecurityCommandInterpreter::passcode(const std::string& command, const std::vector<std::string>& arguments) {
+  SecurityPlugin* plugin = dynamic_cast<SecurityPlugin*>(getPlugin());
+
+  if (arguments.size() > 1) {
+    int result = plugin->passcode(arguments[0], arguments[1]);
+    if (result != 0) {
+      outputWriter_->writeLine("%s failed with %d", command.c_str(), result);
+    }
+    return result;
+  }
+  else {
+    outputWriter_->writeLine("Usage: " + command + " [OLD PASSCODE] [NEW PASSCODE]");
+    return -1;
+  }
+}
+
+int SecurityCommandInterpreter::name(const std::string& command, const std::vector<std::string>& arguments) {
+  SecurityPlugin* plugin = dynamic_cast<SecurityPlugin*>(getPlugin());
+  
+  if (arguments.size() > 1) {
+    int result = plugin->name(arguments[0], arguments[1]);
+    if (result != 0) {
+      outputWriter_->writeLine("%s failed with %d", command.c_str(), result);
+    }
+    return result;
+  }
+  else {
+    outputWriter_->writeLine("Usage: " + command + " [OLD NAME] [NEW NAME]");
+    return -1;
+  }
+}
 
