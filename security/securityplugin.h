@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "../plugin.h"
 #include "../event.h"
@@ -14,8 +15,10 @@
 #include "xbserial/iosample.h"
 #include "securitycommandinterpreter.h"
 
-#define ERR_SECURITY_ARMED -1001
-#define ERR_SECURITY_DISARMED -1002
+const int ERR_INVALID_PASSCODE = -1000; 
+const int ERR_SECURITY_ARMED = -1001;
+const int ERR_SECURITY_DISARMED = -1002;
+const int ERR_INVALID_NODE = -1003;
 
 enum NodeStatus {
   NODE_STATUS_UNKNOWN,
@@ -37,6 +40,16 @@ enum SecurityStatus {
 };
 
 const XB::PIN SENSOR_PIN = XB::D0;
+const std::string DEFAULT_PASSCODE = "000";
+
+struct SecurityData {
+  std::string passcode;
+  std::map<XB::Address64, std::string> identifierMap;
+
+  SecurityData() {
+    passcode = DEFAULT_PASSCODE;
+  }
+};
 
 class SecurityPlugin : public Plugin, public XB::IOSampleFrameSubscriber {
  public:
@@ -53,17 +66,24 @@ class SecurityPlugin : public Plugin, public XB::IOSampleFrameSubscriber {
   int discover();
   int arm(const std::string& passcode);
   int disarm(const std::string& passcode);
+  int passcode(const std::string& oldPasscode, const std::string& passcode);
   Event<SecurityStatus>* const getStatusChangedEvent();
+  int name(const std::string& oldName, const std::string& name);
   void received(const XB::IOSampleFrame* frame);
 
  private:
   int handleIOSample(Node* node, const XB::IOSampleFrame* frame);
   void setStatus(SecurityStatus status);
-  XB::ModuleConfiguration* readConfiguration(const std::string& path);
+  SecurityData* readSecurityData(const std::string& path);
+  int writeSecurityData(const std::string& path, SecurityData* data);
+  XB::ModuleConfiguration* readModuleConfiguration(const std::string& path);
+  Node* findNodeByIdentifier(const std::string& identifier);
+  Node* findNodeByAddress(XB::Address16 address);
   int destroyNodes();
   
  private:
   Logger logger_;
+  SecurityData* securityData_;
   XB::Manager manager_;
   SecurityCommandInterpreter* commandInterpreter_;
   SecurityStatus status_;

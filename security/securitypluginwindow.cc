@@ -57,6 +57,7 @@ int SecurityPluginWindow::drawContent() {
 
     mvwprintw(win, y, x, node->module->identifier.c_str());
     x += std::max(node->module->identifier.length(), 25ul);
+    wclrtoeol(win);
 
     statusString = getString(node->status);
     attributes = getAttributes(node->status);

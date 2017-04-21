@@ -21,6 +21,8 @@ class SecurityCommandInterpreter : public PluginCommandInterpreter {
   int discover(const std::string& command, const std::vector<std::string>& arguments);
   int arm(const std::string& command, const std::vector<std::string>& arguments);
   int disarm(const std::string& command, const std::vector<std::string>& arguments);
+  int passcode(const std::string& command, const std::vector<std::string>& arguments);
+  int name(const std::string& command, const std::vector<std::string>& arguments);
 
  private:
   std::map<std::string, CommandFunction> commandFunctions_;
